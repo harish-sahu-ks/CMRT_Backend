@@ -5,5 +5,22 @@
         "user": "root",
         "password": "Harish@1234",
         "database": "node-mysql-filehistory-login-api18"
-    } 
+    },
+    "emailTransportorDetails":
+    {
+        "email":"vijay.y11783@gmail.com",
+        "password":"eyrwzakhnyzzeyug",
+        "service": "gmail",
+        "subject":"Email for only Testing",
+        "content":["<p>Dear Customer</p>",
+        
+        "<p></p>",
+        "<a href=\"{{LinkPath}}\">Click here for Login</a>",
+        
+        "<p><p>Regards,</p>",
+        "<p>Shridhar Rajappanavar</p>",
+        "<p>Founder & CEO</p></p>"
+        
+]
+    }
 }

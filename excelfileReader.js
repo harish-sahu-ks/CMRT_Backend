@@ -4,6 +4,9 @@ const indeX = require('./index')
 const XLSX = require('xlsx')
 const uuid = require('uuid')
 const db = require("./db");
+const config = require('./config.json');
+const guid = require('guid');
+var nodemailer = require('nodemailer');
 
 let cidAndDetailList = [];
 let filteredSmelterIdList = [];
@@ -15,7 +18,8 @@ module.exports = {
     filterResultFileTogetUniqueFile,
     deleteUserDetail,
     editUserEmail,
-    CheckUserListRow
+    CheckUserListRow,
+    sendEmailTo
     
 }
 
@@ -86,11 +90,10 @@ let ConsolidatedFileUniquePath = "";
     for(let index=0; index<temp.length; index++){
         const element = temp[index];
         filteredSmelterIdList.push({
-            "Smelter_Name": element["Smelter_Name"],
+            "Supplier_Name": element["Supplier_Name"],
             "Smelter_Id_Number": element["Smelter_Id_Number"],
             "Metal": element["Metal"],
         })
-
     }
     return filteredSmelterIdList;
  }
@@ -102,21 +105,30 @@ let isNotMatched = false;
 let isMatched = false;
 let userCount = 0;
 let uniqueCount = 0;
+
+function userListpop(){
+   while(userList.length>0){
+     userList.pop();
+   }
+}
 function filterResultFileTogetUniqueFile(UniqueNumber){
-  while(uniqueList.length>0){
-        uniqueList.pop();
-     }
+
+userListpop();
+   
   FileToRead = 'Result/result'+UniqueNumber+'.xlsx';
   file = reader.readFile(FileToRead);
   const temp = reader.utils.sheet_to_json(file.Sheets[file.SheetNames[0]]);
+  console.log(temp.length +'h')
   for(let index=0; index<temp.length;index++){
     const element = temp[index];
      for(let index1=0; index1<rmiSmelterLookupData.length;index1++){
           const elements = rmiSmelterLookupData[index1];
-          if(element.Smelter_Id_Number != elements.Smelter_Id){
+        if(element.Smelter_Identification != ''){
+
+          if(element.Smelter_Identification != elements.Smelter_Id){
             isSmelterNotListed = true;
           }
-          else if(element.Smelter_Id_Number == elements.Smelter_Id){
+          else if(element.Smelter_Identification == elements.Smelter_Id){
             isSmelterListed = true;
             isSmelterNotListed = false;
             break;
@@ -124,7 +136,12 @@ function filterResultFileTogetUniqueFile(UniqueNumber){
           else{
 
           }
+        }else{
+
+        }  
      }
+
+ 
      if(isSmelterListed==true && isSmelterNotListed==false){
         userList.push({
             // "Smelter_Name": element["Smelter_Name"],
@@ -173,16 +190,19 @@ function filterResultFileTogetUniqueFile(UniqueNumber){
 
      }
   }
-
-//   while(uniqueList.length>0){
-//     uniqueList.pop();
-//  }
+ 
+  console.log("ResultRow "+ userList.length)
+  while(uniqueList.length>0){
+    uniqueList.pop();
+ }
   for(let i=0; i<userList.length;i++){
         const element1 = userList[i]
     for(let j=0; j<uniqueList.length;j++){
         const element2 = uniqueList[j]
-        let  userSmelterid = element1.Smelter_Id_Number;
-        let  uniqSmelterId = element2.Smelter_Id_Number;
+        let  userSmelterid = element1.Smelter_Identification;
+        let  uniqSmelterId = element2.Smelter_Identification;
+      if(userSmelterid !='' || userSmelterid != undefined){
+      
        if(i==0){
         // uniqueList.push(userList[i])
         break
@@ -203,9 +223,12 @@ function filterResultFileTogetUniqueFile(UniqueNumber){
             }
             if(userCount>uniqueCount){
               uniqueList[j] = userList[i]
+            }else if(userCount==uniqueCount){
+              uniqueList[j] = userList[i]
             }
             break;
        }
+      }
     }
     if(i==0){
         uniqueList.push(userList[i])
@@ -213,9 +236,11 @@ function filterResultFileTogetUniqueFile(UniqueNumber){
     else if(isNotMatched == true && isMatched == false){
         uniqueList.push(userList[i])
     }else{
-      console.log(i)
+      // console.log(i)
     }
+    // console.log(uniqueList.length+' '+i+'l')
   }
+    console.log(uniqueList.length+' uniquerow')
     const ws = XLSX.utils.json_to_sheet(uniqueList);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,"Response");
@@ -257,7 +282,34 @@ async function CheckUserListRow(email,isSelected){
     row.isSelect = isSelected;
     row.save();
   }
+
 }
 
+async function sendEmailTo(receiverEmailId) {
+  name1 = receiverEmailId;
+  contentArray = config.emailTransportorDetails.content;
+  content = "";
+  for(let index=0; index<contentArray.length;index++){
+     content = content + contentArray[index];
+  }
+  let guidPath = guid.create();
+  content = content.replace("{{LinkPath}}", "http://localhost:4200/login/"+guidPath);
+  subject = config.emailTransportorDetails.subject;
+  htmlText = content;
+  var transportor=nodemailer.createTransport({
+    service: config.emailTransportorDetails.service,
+    auth: {
+      user: config.emailTransportorDetails.email,
+      pass: config.emailTransportorDetails.password,
+  }
+  })
+  var mailOptions = {
+    from: config.emailTransportorDetails.email,
+    to: receiverEmailId,
+    subject: subject,
+    html: htmlText
+};
+resultMailSend = await transportor.sendMail(mailOptions);
+} 
 
  
