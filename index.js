@@ -17,12 +17,15 @@ const Result_folder = "./Result";
 const path = require("path");
 const excelfileReader = require("./excelfileReader")
 const excelJs = require("exceljs");
+const Role = require('./helper/role');
 //const Blob = require('node:buffer');
 var FileSaver = require('file-saver');
 //const Blob  = require('buffer');
 const uuid = require('uuid');
-
-
+const jwt = require("jsonwebtoken");
+const secretkey = "secretKey"
+const authorization = require("./helper/authorize");
+const authorize = require("./helper/authorize");
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -40,6 +43,7 @@ let Name_of_ZipFile = "";
 async function fileDetailAddinDatabase(uniqueNumber,uniqueResultNumber,Name_of_ZipFile,count,row){
   row = dataToPushResultXl1.length;
   // let timestamp = Date.now();
+  if(row>0){
   let date_time = new Date();
   let date = ("0" + date_time.getDate()).slice(-2);
   let month = ("0" + (date_time.getMonth() + 1)).slice(-2);
@@ -55,9 +59,55 @@ async function fileDetailAddinDatabase(uniqueNumber,uniqueResultNumber,Name_of_Z
   }
   await db.cmrt_file_details.create(fileDetailToAdd);
   return fileDetailToAdd
+}else{
+  console.log("Incorrect file")
+}
 }
 
-app.put('/deleteUserDetail',(req,res)=>{
+// app.post("/login",(req,res)=>{
+//   const data = req.body;
+//   const user = {
+//     username:"admin",
+//     password:"admin123"  
+//   }
+//   if(user.username==data[0].username && user.password==data[0].password){    
+//     jwt.sign({user},secretkey,{expiresIn:'300s'},(err,token)=>{
+//       res.json({
+//         token
+//       })
+//     })
+//   }else{
+//     res.send("Invalid Password");
+//   }
+// })
+
+// app.post('/profile',verifyToken,(req,resp)=>{
+//   jwt.verify(req.token,secretkey,(err, authData)=>{
+//    if(err){
+//       resp.send({result:"Invalid token"})
+//    }else{
+//      resp.json({
+//        message : "profile Accessed",
+//      })
+//    }
+//   })
+// })
+
+// function verifyToken(req,resp,next){
+//   const bearerHeader = req.headers['authorization'];
+//   if(typeof bearerHeader !== 'undefined'){
+//     const bearer = bearerHeader.split(" ")
+//     const token = bearer[1];
+//     req.token = token;
+//     next();
+//   }else{
+//     resp.send({
+//       result:'Token is not valid'
+//     })
+//   }
+// }
+
+app.put('/deleteUserDetail',authorize(),(req,res)=>{
   EmailListForDelete = [];
   EmailList = req.body
   console.log(EmailList)
@@ -71,7 +121,7 @@ app.put('/deleteUserDetail',(req,res)=>{
 //   res.json(req.body.isSelect);
 // })
 
-app.put('/updateEmail',(req,res)=>{
+app.put('/updateEmail',authorize(),(req,res)=>{
   preEmail = req.body.Email;
   new_Email = req.body.new_Email;
   excelfileReader.editUserEmail(preEmail,new_Email);
@@ -99,15 +149,13 @@ async function storeuserDetails(userdata,res){
   // getuserdetail(res);
 }
 
-app.get('/getuserDetailList',(req,res)=>{
-  getuserdetail(res);
-})
-async function getuserdetail(res){
+app.get('/getuserDetailList',authorize(), getuserdetail);
+async function getuserdetail(req,res){
   storedUserlist = await db.user_details.findAll({attribute : ['Name','Company','Email','Status','isSelect']});
   return res.json(storedUserlist);
 }
 
-app.get('/detailOfUploadedFileConsolidatedFileResultFile',(req,res)=>{
+app.get('/detailOfUploadedFileConsolidatedFileResultFile',authorize(),(req,res)=>{
 
   myFunc(req,res);
   
@@ -128,7 +176,7 @@ app.post('/postdateandNameofZipFile/:FileName', (req, res)=>{
   res.send(Name_of_ZipFile);
 })
 
-app.get('/DownLoadUniqueFileData/:UniqueNumber',(req,res)=>{
+app.get('/DownLoadUniqueFileData/:UniqueNumber',authorize(),(req,res)=>{
  const UniqueNumber = req.params.UniqueNumber
 //  const ExistentFileName = './UniqueFile/uniquefile' + UniqueNumber  + '.xlsx' ;
  
@@ -163,7 +211,7 @@ app.post('/getConsolidatedFileNumber/:ConsolidatedFileNumber',(req,res)=>{
   res.json(ConsolidatedFileNumber)
 })
 
-app.get('/getFilteredSmelterList/:SmelterId',(req, res)=>{
+app.get('/getFilteredSmelterList/:SmelterId',authorize(),(req, res)=>{
   const SmelterId = req.params.SmelterId;
   const ConsolidatedFileNumber = req.body.consolidatedFileNumber;
   // excelfileReader.fetchFilteredDataFromAllFile(ConsolidatedFileNumber);
@@ -172,7 +220,7 @@ app.get('/getFilteredSmelterList/:SmelterId',(req, res)=>{
     const element = excelfileReader.filteredSmelterIdList[index];
     if(SmelterId==element.Smelter_Id_Number){
       this.SupplierList.push({
-        "Smelter_Name": element.Smelter_Name,
+        "Supplier_Name": element.Supplier_Name,
         "Smelter_Id_Number": element.Smelter_Id_Number,
         "Metal": element.Metal
       })
@@ -181,7 +229,7 @@ app.get('/getFilteredSmelterList/:SmelterId',(req, res)=>{
   res.json(this.SupplierList);
 })
 
-app.get('/getDetailsBySmelterRef/:SmelterRef',(req, res,)=>{
+app.get('/getDetailsBySmelterRef/:SmelterRef',authorize(),(req, res,)=>{
       const SmelterRef = req.params.SmelterRef
       // res.send(id)
       this.SmelterfileDetail=[]
@@ -201,7 +249,7 @@ app.get('/getDetailsBySmelterRef/:SmelterRef',(req, res,)=>{
       res.json(this.SmelterfileDetail);
 })
 
-app.get("/getCIDNumberAndDetails", (req, res) => {
+app.get("/getCIDNumberAndDetails",authorize(), (req, res) => {
   
   this.SmelterfileDetail=[]
 
@@ -219,7 +267,7 @@ app.get("/getCIDNumberAndDetails", (req, res) => {
     res.json(this.SmelterfileDetail);
 });
 
-app.get("/download", async function (req, res) {
+app.get("/download",authorize(), async function (req, res) {
   fs.readFile("./resultInfo.txt", "utf8", function (err, data) {
     // Display the file content
     console.log(data);
@@ -227,7 +275,85 @@ app.get("/download", async function (req, res) {
   });
 });
 
-app.get("/download/:resultFileNumber", async function (req, res) {
+app.post('/authenticate', authenticate);  
+
+app.get('/testUrl', authorize(), testImpl); 
+
+app.post('/initiateEmail',sendEmail);
+
+app.post('/reinitiateEmali',reinitiateEmail);
+
+async function sendEmail(req,res,next){
+  storedUserlist = await db.user_details.findAll({attribute : ['Name','Company','Email','Status','isSelect']});
+    userEmailList = [];
+    for(let i=0;i<storedUserlist.length;i++){
+      // userEmailList.push(storedUserlist[i].Email)
+      element = storedUserlist[i];
+      if(element.Email != null){
+        await excelfileReader.sendEmailTo(element.Email)
+      }
+    }
+    return res.json("success");
+}
+
+async function reinitiateEmail(req,res,next){
+   EmailList = req.body;
+   for(let i=0;i<EmailList.length;i++){
+      Email = EmailList[i]
+      await excelfileReader.sendEmailTo(Email);
+   }
+   return res.send("success");
+}
+
+
+
+function testImpl(req, res, next) {
+  res.json("Vijay");
+}
+
+async function authenticatePrivateFunction(username, password ) {
+
+  if(username == "admin" && password=="admin123")
+  {
+      //console.log(password);
+     // const user = await db.User.scope('withHash').findOne({ where: { username } });
+
+      // if (!user || !(await bcrypt.compare(password, user.hash)))
+      //     throw 'Username or password is incorrect';
+
+      console.log('Success');
+
+      // authentication successful
+      const token = jwt.sign({ sub: 1, role: "Admin", username:username }, 
+        "JKJKJKJKJKJKGFFFF", { expiresIn: '7d' });
+      //console.log(user.role);
+      //const { hash, ...userWithoutPassword } = user;
+      //return { userWithoutPassword, token };
+      return { "token": token };
+  }
+  else
+  {
+    return null;
+  }
+}
+
+function authenticate(req, res, next) {
+  data = req.body
+  password = data[0].password;
+  username = data[0].username;
+  authenticatePrivateFunction(username,password)
+      .then(user => user ? res.json(user) : res.status(400).json({ message: 'Username or password is incorrect' }))
+      .catch(err => {
+          console.log(err);
+          next(err)
+      }
+      ); 
+}
+
+app.get("/download/:resultFileNumber",authorize(), downloadFile);
+
+
+async function downloadFile(req, res) {
   const resultFileNumber = req.params.resultFileNumber;
   const options = {
       root: path.join(__dirname)
@@ -236,16 +362,15 @@ app.get("/download/:resultFileNumber", async function (req, res) {
   const fileName = './Result/result' + resultFileNumber + '.xlsx' ;
   res.sendFile(fileName, options, function (err) {
       if (err) {
-          next(err);
+          // next(err);
       } else {
           console.log('Sent:', fileName);
       }
   });
 
   
-});
-
-app.get('/DownloadConsolidatedFile/:consolidatedFilePath', function (req, res) {
+}
+app.get('/DownloadConsolidatedFile/:consolidatedFilePath',authorize(), function (req, res) {
   const consolidatedFileNumber = req.params.consolidatedFilePath;
   const options = {
       root: path.join(__dirname)
@@ -261,7 +386,7 @@ app.get('/DownloadConsolidatedFile/:consolidatedFilePath', function (req, res) {
   });
 });
 
-app.get("/getResultFileData", async function (req, res) {
+app.get("/getResultFileData",authorize(), async function (req, res) {
   let resultFileDataList = [];
   fs.readFile("./resultInfo.txt", "utf8", function (err, data) {
     // Display the file content
@@ -497,16 +622,6 @@ function compareSmelterFilesAndCreateResultFile(
       2
     );
 
-    AnalyzeAndFillArray1(
-      smelterSheetFromSourceFile,
-      resultArray1,
-      srcFile_name,
-      file1,
-      5,
-      4,
-      rmiList
-    );
-
     AnalyzeAndFillArray(
       smelterSheetFromExistingFile,
       resultArray,
@@ -524,12 +639,22 @@ function compareSmelterFilesAndCreateResultFile(
       4
     );
 
+    AnalyzeAndFillArray1(
+      smelterSheetFromSourceFile,
+      resultArray1,
+      srcFile_name,
+      file1,
+      5,
+      4,
+      rmiList
+    );
+
     if(resultArray1.length > 0){
       
       for(let index=0; index<resultArray1.length;index++){
-        if(resultArray1[index][1] != undefined){
+        
         let rowData = {
-          Smelter_Name: resultArray1[index][0],
+          Supplier_Name: resultArray1[index][0],
           Smelter_Id_Number: resultArray1[index][1],
           Metal: resultArray1[index][2],
           Smelter_LookUp: resultArray1[index][3],
@@ -551,7 +676,7 @@ function compareSmelterFilesAndCreateResultFile(
           Type : resultArray1[index][19]
         }
         dataToPushResultXl1.push(rowData);
-      }  
+      
     }
     
     if (resultArray.length > 0) {
@@ -582,7 +707,7 @@ function compareSmelterFilesAndCreateResultFile(
       if(isLastFile){
       uniqueResultNumber = uuid.v4();
       resultFileUniquePath = ".\\Result\\result"+`${uniqueResultNumber}`+".xlsx"
-      // console.log(uniqueResultNumber);
+      console.log("resultFileUniquePath :" + resultFileUniquePath);
       const ws = XLSX.utils.json_to_sheet(dataToPushResultXl);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Responses");
@@ -613,37 +738,38 @@ function compareSmelterFilesAndCreateResultFile(
     if (smelterSheet.hasOwnProperty("!ref")) {
       var range = XLSX.utils.decode_range(smelterSheet["!ref"]);
       let lastRow = range.e.r;
-      console.log("lastRow: " + lastRow);
-      // let columnOffset = isSrcFile ?0:1;
+      console.log("lastRows: " + lastRow);
          let columnOffset = 0
       for (i = rowStartIndex; i < lastRow + rowStartIndex; i++) {
         data = [];
         index1 = letters.charAt(columnOffset) + i;
-        testData = file.Sheets[file.SheetNames[sheetIndex]][index1];
-        if (testData != undefined) {
+        index2 = letters.charAt(5) + i;
+        testData1 = file.Sheets[file.SheetNames[sheetIndex]][index1];
+        testData2 = file.Sheets[file.SheetNames[sheetIndex]][index2];
+        if (testData2 != undefined && testData2.v != '') {
           index1 = letters.charAt(columnOffset) + i;
-          //console.log(testData.v)
-          // let numberOfCols = isSrcFile ? 17 : 18;
           let numberOfCols = 17
-          // let indexOffset = isSrcFile ? 1 : 0;
           let indexOffset = 0
           for (let index = 0; index < numberOfCols; index++) {
             index1 = letters.charAt(index) + i;
 
-            tempCellData = file.Sheets[file.SheetNames[sheetIndex]][index1];
-            // if (index == 0 && isSrcFile) {
-            //   // data[0] = srcFile_name;
-            //   data[1] = tempCellData.v;
-            // } 
+            tempCellData = file.Sheets[file.SheetNames[sheetIndex]][index1]; 
                                      
               if (tempCellData != undefined) {
-                data[index + indexOffset] = tempCellData.v;
+                if(index==7){
+                     if(tempCellData.v==0){
+                      data[index + indexOffset] = '';
+                     }else{
+                      data[index + indexOffset] = tempCellData.v;
+                     }
+                }else{
+                  data[index + indexOffset] = tempCellData.v;
+                }
               }
             
           }
           found = findInArray(isSrcFile, resultArray, data);
           if (found.flag == false) {
-            // data[0] = srcFile_name;
             resultArray.push(data);
           } else {
             if (isBetterData(data, found.data)) {
@@ -651,7 +777,6 @@ function compareSmelterFilesAndCreateResultFile(
             }
           }
         } else {
-          console.log("Actual lastRow: " + i);
           break;
         }
       }
@@ -703,50 +828,74 @@ function AnalyzeAndFillArray1(
   rmiList
 ){
   
-   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-   if(smelterSheet.hasOwnProperty("!ref")){
-    var range = XLSX.utils.decode_range(smelterSheet["!ref"]);
-    let lastRow = range.e.r;
-    console.log("lastrow:"+lastRow);
-    let columnOffset = 0;
-    for(let i=rowStartIndex;i<lastRow+sheetIndex;i++){
-      data = [];
-      index1 = letters.charAt(columnOffset)+i;
-      testData = file.Sheets[file.SheetNames[sheetIndex]][index1];
-      if(testData != undefined){
-        // index1 : letters.charAt(columnOffset)+i;
-        let numberOfColumns = 18;
-        let indexOffset1 = 1;
-        for(let index = 0; index < numberOfColumns; index++){
-            index1 = letters.charAt(index)+i;
-            tempCellData = file.Sheets[file.SheetNames[sheetIndex]][index1];
-            if(index==0){
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  if(smelterSheet.hasOwnProperty("!ref")){
+   var range = XLSX.utils.decode_range(smelterSheet["!ref"]);
+   let lastRow = range.e.r;
+   console.log("lastrow:"+lastRow);
+   let columnOffset = 0;
+   for(let i=rowStartIndex;i<lastRow+sheetIndex;i++){
+     data = [];
+    let index0 = letters.charAt(columnOffset)+i;
+    let index00 = letters.charAt(5)+i;
+     let testData1 = file.Sheets[file.SheetNames[sheetIndex]][index0];
+     let testData2 = file.Sheets[file.SheetNames[sheetIndex]][index00];
+      
+     if(testData2 != undefined && testData2.v != ''){
+       // index1 : letters.charAt(columnOffset)+i;
+       let numberOfColumns = 18;
+       let indexOffset1 = 1;
+       for(let index = 0; index < numberOfColumns; index++){
+          let index1 = letters.charAt(index)+i;
+          let  index2 = letters.charAt(5)+i;
+          let tempCellData1 = file.Sheets[file.SheetNames[sheetIndex]][index2];
+          let tempCellData = file.Sheets[file.SheetNames[sheetIndex]][index1];
+           if(index==0){
+             if(tempCellData == undefined && tempCellData1.v != ''){
+                data[0] = srcFile_name;
+                data[1] = '';
+             }else if(tempCellData != undefined && tempCellData1.v != '' ){
               data[0] = srcFile_name;
               data[1] = tempCellData.v;
-            };
-            if(tempCellData != undefined && index != 0) {
-                data[index+indexOffset1] = tempCellData.v;
-            }
-            if(index==17){
-              for(let j=0;j<rmiList.length; j++){
-                if(data[1]==rmiList[j][4]){
-                  data[index+indexOffset1] = rmiList[j][7];
-                  data[index+indexOffset1+indexOffset1] = rmiList[j][8];
-                  break;
-                }else{
-                  data[index+indexOffset1] = "Smelter Not Listed In RMI file";
-                  data[index+indexOffset1+indexOffset1] = "Smelter Not Listed In RMI file";
-                }
+             }
+             else{
+                console.log(tempCellData.v +' '+srcFile_name);
+                break;
+             }
+           };
+           if(tempCellData != undefined && index != 0) {    
+            if(index==7){
+              if(tempCellData.v==0){
+               data[index + indexOffset1] = '';
+              }else{
+               data[index + indexOffset1] = tempCellData.v;
               }
-            }
+         }else{
+               data[index + indexOffset1] = tempCellData.v;
+             }  
+          }
+          if(index==17){
+             for(let j=0;j<rmiList.length; j++){
+               if(data[1]==rmiList[j][4]){
+                 data[index+indexOffset1] = rmiList[j][7];
+                 data[index+indexOffset1+indexOffset1] = rmiList[j][8];
+                 break;
+               }else{
+                 data[index+indexOffset1] = "Smelter Not Listed In RMI file";
+                 data[index+indexOffset1+indexOffset1] = "Smelter Not Listed In RMI file";
+               }
+             }
+           }
 
-            }
-        }
-        resultArray1.push(data);
-      }
-      // console.log(resultArray1.length);
-    }
-  }
+           }
+           resultArray1.push(data);
+       }else{
+       break;
+       }
+     }
+     console.log("files length : "+ resultArray1.length);
+   }
+ }
 
 
 app.listen(port, () => {
