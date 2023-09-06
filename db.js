@@ -13,9 +13,10 @@ async function initialize() {
     const connection = await mysql.createConnection({ host, port, user, password });
     await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\`;`);
 
+    
     // connect to db
     
-    const sequelize = new Sequelize(database, user, password, { dialect: 'mysql' });
+    const sequelize = new Sequelize(database, user, password, {host, dialect: 'mysql' });
 
     
     db.cmrt_file_details = require('./serverConnection/serverConnection.model')(sequelize);
