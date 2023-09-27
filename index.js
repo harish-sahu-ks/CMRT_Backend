@@ -211,6 +211,16 @@ app.post('/getConsolidatedFileNumber/:ConsolidatedFileNumber',(req,res)=>{
   res.json(ConsolidatedFileNumber)
 })
 
+app.put('/deleteGeneratefileanditsDetails',(req,res)=>{
+   const ConsolidatedFileNum = req.body.consolidUniqNum;
+   const resultFileNum = req.body.resultUniqueNum;
+   const uniqfileNum = resultFileNum;
+   console.log(ConsolidatedFileNum +"  "+ resultFileNum);
+   let response = excelfileReader.deletefileAnditsdetail(ConsolidatedFileNum,resultFileNum,uniqfileNum);
+   res.json(response);
+        
+})
+
 app.get('/getFilteredSmelterList/:SmelterId',authorize(),(req, res)=>{
   const SmelterId = req.params.SmelterId;
   const ConsolidatedFileNumber = req.body.consolidatedFileNumber;
@@ -222,7 +232,12 @@ app.get('/getFilteredSmelterList/:SmelterId',authorize(),(req, res)=>{
       this.SupplierList.push({
         "Supplier_Name": element.Supplier_Name,
         "Smelter_Id_Number": element.Smelter_Id_Number,
-        "Metal": element.Metal
+        "Metal": element.Metal,
+        "RMI_Status" : element.RMI_Status,
+        "Type" : element.Type,
+        "Smelter_Reference" : element.Smelter_Reference,
+        "country"  : element.country
+
       })
     }
   }
@@ -876,7 +891,7 @@ function AnalyzeAndFillArray1(
           }
           if(index==17){
              for(let j=0;j<rmiList.length; j++){
-               if(data[1]==rmiList[j][4]){
+               if(data[6]==rmiList[j][4]){
                  data[index+indexOffset1] = rmiList[j][7];
                  data[index+indexOffset1+indexOffset1] = rmiList[j][8];
                  break;

@@ -19,7 +19,8 @@ module.exports = {
     deleteUserDetail,
     editUserEmail,
     CheckUserListRow,
-    sendEmailTo
+    sendEmailTo,
+    deletefileAnditsdetail
     
 }
 
@@ -91,8 +92,12 @@ let ConsolidatedFileUniquePath = "";
         const element = temp[index];
         filteredSmelterIdList.push({
             "Supplier_Name": element["Supplier_Name"],
-            "Smelter_Id_Number": element["Smelter_Id_Number"],
+            "Smelter_Id_Number": element["Smelter_Identification"],
             "Metal": element["Metal"],
+            "RMI_Status" : element["RMI_Status"],
+            "Type" : element["Type"],
+            "Smelter_Reference" : element["Smelter_LookUp"],
+            "country" : element["SmelterCountry"]
         })
     }
     return filteredSmelterIdList;
@@ -264,6 +269,23 @@ async function deleteUserDetail(EmailList){
     }
    }
     }
+async function deletefileAnditsdetail(consolidatedFileNum,resultFileNum,uniquefileNum){
+  if(db.cmrt_file_details){
+     const row = await db.cmrt_file_details.findOne({
+      where : {ConsolidatedFileName:consolidatedFileNum}
+     })
+    if(row){
+      await row.destroy();
+      fs.unlinkSync("allFileRows/allFileRows"+consolidatedFileNum+".xlsx");
+      fs.unlinkSync("Result/result"+resultFileNum+".xlsx");
+      fs.unlinkSync("UniqueFile/uniquefile"+uniquefileNum+".xlsx")
+     }else{
+        
+     }
+  }
+
+}
+
 async function editUserEmail(preEmail,new_Email){
     const row = await db.user_details.findOne({
       where : {Email : preEmail}
