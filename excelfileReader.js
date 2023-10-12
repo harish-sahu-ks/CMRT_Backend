@@ -11,16 +11,19 @@ var nodemailer = require('nodemailer');
 let cidAndDetailList = [];
 let filteredSmelterIdList = [];
 let rmiSmelterLookupData = [];
+let smelterListByStatus = [];
 module.exports = {
     cidAndDetailList,
     filteredSmelterIdList,
+    smelterListByStatus,
     fetchFilteredDataFromAllFile,
     filterResultFileTogetUniqueFile,
     deleteUserDetail,
     editUserEmail,
     CheckUserListRow,
     sendEmailTo,
-    deletefileAnditsdetail
+    deletefileAnditsdetail,
+    getdatabystatus
     
 }
 
@@ -216,22 +219,32 @@ userListpop();
           isNotMatched = true;
           isMatched = false
        }
-       else{
+       else if(userSmelterid == uniqSmelterId && i != 0){
+        console.log(userSmelterid + uniqSmelterId)
            isMatched = true;
-           for(let k=0; k<18; k++){
-              if(userList[i][k] != undefined){
+           for(let k in userList[i]){
+              if(userList[i][k]){
                  userCount++;
               }
-              if(uniqueList[j][k] != undefined){
+              if(uniqueList[j][k]){
                 uniqueCount++;
               }
+              console.log(userList[i][k])
             }
+            console.log(uniqueCount +" H "+userCount)
             if(userCount>uniqueCount){
-              uniqueList[j] = userList[i]
+              // uniqueList[j] = userList[i]
+              let myobj1 = userList[i];
+              uniqueList.splice(j, 1, myobj1)
             }else if(userCount==uniqueCount){
-              uniqueList[j] = userList[i]
+              // uniqueList[j] = userList[i]
+              // uniqueList.splice(j, 1, userList[i])
             }
+            userCount = 0;
+            uniqueCount = 0;
             break;
+       }else{
+
        }
       }
     }
@@ -270,6 +283,9 @@ async function deleteUserDetail(EmailList){
    }
     }
 async function deletefileAnditsdetail(consolidatedFileNum,resultFileNum,uniquefileNum){
+  
+  try{
+
   if(db.cmrt_file_details){
      const row = await db.cmrt_file_details.findOne({
       where : {ConsolidatedFileName:consolidatedFileNum}
@@ -282,6 +298,79 @@ async function deletefileAnditsdetail(consolidatedFileNum,resultFileNum,uniquefi
      }else{
         
      }
+  }
+
+}catch(error){
+console.log("error occured; " + error);
+} 
+}
+
+async function getdatabystatus(ConsolidatedFileNum,SmelterStatus,Smeltertype){
+     console.log(SmelterStatus + " " + Smeltertype);
+  try{
+    ConsolidatedFileUniquePath = 'allFileRows/allFileRows'+ ConsolidatedFileNum +'.xlsx'
+    while(smelterListByStatus.length>0){
+      smelterListByStatus.pop();
+    }
+    file = reader.readFile(ConsolidatedFileUniquePath);
+    const temp = reader.utils.sheet_to_json(file.Sheets[file.SheetNames[0]]);
+    if(SmelterStatus && Smeltertype == undefined){
+      console.log("1")
+          for(let index=0; index<temp.length; index++){
+              const element = temp[index];
+            if(element["RMI_Status"]==SmelterStatus){
+              smelterListByStatus.push({
+              "Supplier_Name": element["Supplier_Name"],
+              "Smelter_Id_Number": element["Smelter_Identification"],
+              "Metal": element["Metal"],
+              // Don't need below element
+              // "RMI_Status" : element["RMI_Status"],
+              // "Type" : element["Type"],
+              // "Smelter_Reference" : element["Smelter_LookUp"],
+              // "country" : element["SmelterCountry"]
+          })
+        }
+        }
+        }else if(SmelterStatus && Smeltertype ){
+          console.log("2")
+          for(let index=0; index<temp.length; index++){
+            const element = temp[index];
+            if(element["RMI_Status"]==SmelterStatus && element["Type"]==Smeltertype){
+              smelterListByStatus.push({
+                "Supplier_Name": element["Supplier_Name"],
+                "Smelter_Id_Number": element["Smelter_Identification"],
+                "Metal": element["Metal"],
+                // Don't need below element
+                // "RMI_Status" : element["RMI_Status"],
+                // "Type" : element["Type"],
+                // "Smelter_Reference" : element["Smelter_LookUp"],
+                // "country" : element["SmelterCountry"]
+            })
+            }
+      }
+        }else if(Smeltertype && SmelterStatus == undefined ){
+          console.log("3")
+          for(let index=0; index<temp.length; index++){
+            const element = temp[index];
+            if(element["Type"]==Smeltertype){  
+             smelterListByStatus.push({
+            "Supplier_Name": element["Supplier_Name"],
+            "Smelter_Id_Number": element["Smelter_Identification"],
+            "Metal": element["Metal"],
+            // Don't need below element
+            // "RMI_Status" : element["RMI_Status"],
+            // "Type" : element["Type"],
+            // "Smelter_Reference" : element["Smelter_LookUp"],
+            // "country" : element["SmelterCountry"]
+        })
+      }
+    }
+        }else{
+
+        }
+    return smelterListByStatus;
+  }catch(error){
+    console.log("error occured; " + error);
   }
 
 }

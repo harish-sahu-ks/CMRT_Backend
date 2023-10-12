@@ -203,12 +203,12 @@ res.sendFile(fileName, options, function (err) {
 //      res.json(NumberOfFileRow);
      
 // })
-
+let ConsolidatedFileNumber = '';
 app.post('/getConsolidatedFileNumber/:ConsolidatedFileNumber',(req,res)=>{
-  ConsolidatedFileNumber = req.params.ConsolidatedFileNumber;
+  this.ConsolidatedFileNumber = req.params.ConsolidatedFileNumber;
   // ConsolidatedFileNumber = excelfileReader.getConsolidatedFileNumber(ConsolidatedFileNumber);
-  excelfileReader.fetchFilteredDataFromAllFile(ConsolidatedFileNumber);
-  res.json(ConsolidatedFileNumber)
+  excelfileReader.fetchFilteredDataFromAllFile(this.ConsolidatedFileNumber);
+  res.json(this.ConsolidatedFileNumber)
 })
 
 app.put('/deleteGeneratefileanditsDetails',(req,res)=>{
@@ -219,6 +219,35 @@ app.put('/deleteGeneratefileanditsDetails',(req,res)=>{
    let response = excelfileReader.deletefileAnditsdetail(ConsolidatedFileNum,resultFileNum,uniqfileNum);
    res.json(response);
         
+})
+
+app.post('/statusAndConsolidatedfileNumber',(req, res)=>{
+  let ConsolidatedFileNum = this.ConsolidatedFileNumber;
+  let SmelterStatus = req.body.SearchedKeyWord;
+  let Smeltertype = req.body.Type;
+  console.log(Smeltertype);
+  console.log(Smeltertype +" "+SmelterStatus);
+  if(SmelterStatus == ''){
+     SmelterStatus = undefined;
+  }else if(Smeltertype == ''){
+     Smeltertype = undefined;
+  }else{
+     
+  }
+  excelfileReader.getdatabystatus(ConsolidatedFileNum,SmelterStatus,Smeltertype);
+  let smelterList = [];
+  for(let index = 0; index<excelfileReader.smelterListByStatus.length; index++){
+    const element = excelfileReader.smelterListByStatus[index];
+    // console.log(element);
+    smelterList.push({
+      "Supplier_Name": element.Supplier_Name,
+      "Smelter_Id_Number": element.Smelter_Id_Number,
+      "Metal": element.Metal,
+    })
+  }
+ this.SmelterType = undefined;
+ SmelterStatus = undefined;
+ res.json(smelterList);
 })
 
 app.get('/getFilteredSmelterList/:SmelterId',authorize(),(req, res)=>{
