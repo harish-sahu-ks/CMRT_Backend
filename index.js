@@ -211,6 +211,257 @@ app.post('/getConsolidatedFileNumber/:ConsolidatedFileNumber',(req,res)=>{
   res.json(this.ConsolidatedFileNumber)
 })
 
+app.get('/getconsolidatedfiledataforhorizontalchart',(req,res)=>{
+  const data = excelfileReader.filteredSmelterIdList;
+  ObjRMIStatus = {};
+  Active_Count = 0;
+  Conformant_Count = 0;
+  Comm_Sus_Not_Intr = 0;
+  In_Comm = 0;
+  Non_Cnfo = 0;
+  Not_Sure = 0;
+  Outreach_Req = 0;
+  Due_Dili_Req_unab_pro = 0;
+  Smel_Not_Listed = 0;
+
+  for(let i = 0; i<data.length; i++){
+      //  console.log(data[i])
+      if(data[i].RMI_Status == "Active"){
+        Active_Count++;
+      }else if(data[i].RMI_Status == "Conformant"){
+        Conformant_Count++;
+      }else if(data[i].RMI_Status == "Communication Suspended - Not Interested"){
+        Comm_Sus_Not_Intr++;
+      }else if(data[i].RMI_Status == "In Communication"){
+        In_Comm++;
+      }else if(data[i].RMI_Status == "Non Conformant"){
+        Non_Cnfo++;
+      }else if(data[i].RMI_Status == "Not Sure"){
+        Not_Sure++;
+      }else if(data[i].RMI_Status == "Outreach Required"){
+        Outreach_Req++;
+      }else if(data[i].RMI_Status == "Smelter Not Listed In RMI file"){
+        Smel_Not_Listed++;
+      }else if(data[i].RMI_Status == "RMI Due Diligence Review - Unable to Proceed"){
+        Due_Dili_Req_unab_pro++;
+      }else{
+
+      }
+  }
+  ObjRMIStatus["Active"] = Active_Count;
+  ObjRMIStatus["Conformant"] = Conformant_Count;
+  ObjRMIStatus["Communication Suspended - Not Interested"] = Comm_Sus_Not_Intr;
+  ObjRMIStatus["In Communication"] = In_Comm;
+  ObjRMIStatus["Non Conformant"] = Non_Cnfo;
+  ObjRMIStatus["Not Sure"] = Not_Sure;
+  ObjRMIStatus["Outreach Required"] = Outreach_Req;
+  ObjRMIStatus["Smelter Not Listed In RMI file"] = Smel_Not_Listed;
+  ObjRMIStatus["RMI Due Diligence Review - Unable to Proceed"] = Due_Dili_Req_unab_pro;
+  // console.log(ObjRMIStatus);
+  res.json(ObjRMIStatus);
+})
+
+app.get('/getMetalcountwithRmiStatus',(req,res)=>{
+     const data = excelfileReader.filteredSmelterIdList;
+     metalcountdata = {};
+     Active_Count_Tant = 0;
+     Active_Count_Tin = 0;
+     Active_Count_Tung = 0;
+     Active_Count_gold = 0; 
+     
+     Conformant_Count_Tant = 0;
+     Conformant_Count_Tin = 0;
+     Conformant_Count_Tung = 0;
+     Conformant_Count_gold = 0;
+     
+     Comm_Sus_Not_Intr_Tant = 0;
+     Comm_Sus_Not_Intr_Tin = 0;
+     Comm_Sus_Not_Intr_Tung = 0;
+     Comm_Sus_Not_Intr_gold = 0;
+     
+     In_Comm_Tant = 0;
+     In_Comm_Tin = 0;
+     In_Comm_Tung = 0;
+     In_Comm_gold = 0;
+     
+     Non_Cnfo_Tant = 0;
+     Non_Cnfo_Tin = 0;
+     Non_Cnfo_Tung = 0;
+     Non_Cnfo_gold = 0;
+     
+     Not_Sure_Tant = 0;
+     Not_Sure_Tin = 0;
+     Not_Sure_Tung = 0;
+     Not_Sure_gold = 0;
+     
+     Outreach_Req_Tant = 0;
+     Outreach_Req_Tin = 0;
+     Outreach_Req_Tung = 0;
+     Outreach_Req_gold = 0;
+     
+     Smel_Not_Listed_Tant = 0;
+     Smel_Not_Listed_Tin = 0;
+     Smel_Not_Listed_Tung = 0;
+     Smel_Not_Listed_gold = 0;
+     
+     Due_Dili_Req_unab_pro_Tant = 0;
+     Due_Dili_Req_unab_pro_Tin = 0;
+     Due_Dili_Req_unab_pro_Tung = 0;
+     Due_Dili_Req_unab_pro_gold = 0;
+     
+     for(let i=0;i<data.length;i++){
+       if(data[i].RMI_Status == "Active"){
+         if(data[i].Metal == "Tantalum"){
+           Active_Count_Tant++;
+          }else if(data[i].Metal == "Tin"){
+            Active_Count_Tin++;
+          }else if(data[i].Metal == "Tungsten"){
+            Active_Count_Tung++;
+          }else if(data[i].Metal == "Gold"){
+            Conformant_Count_gold++;
+          }else{     }
+        }else if(data[i].RMI_Status == "Conformant"){
+          if(data[i].Metal == "Tantalum"){
+            Conformant_Count_Tant++;
+          }else if(data[i].Metal == "Tin"){
+            Conformant_Count_Tin++;
+          }else if(data[i].Metal == "Tungsten"){
+            Conformant_Count_Tung++;
+          }else if(data[i].Metal == "Gold"){
+            Active_Count_gold++;
+          }else{}
+        }else if(data[i].RMI_Status == "Communication Suspended - Not Interested"){
+          if(data[i].Metal == "Tantalum"){
+            Comm_Sus_Not_Intr_Tant++;
+          }else if(data[i].Metal == "Tin"){
+            Comm_Sus_Not_Intr_Tin++;
+          }else if(data[i].Metal == "Tungsten"){
+            Comm_Sus_Not_Intr_Tung++;
+          }else if(data[i].Metal == "Gold"){
+            Comm_Sus_Not_Intr_gold++;
+          }else{}
+        }else if(data[i].RMI_Status == "In Communication"){
+          if(data[i].Metal == "Tantalum"){
+            In_Comm_Tant++;
+          }else if(data[i].Metal == "Tin"){
+            In_Comm_Tin++;
+          }else if(data[i].Metal == "Tungsten"){
+            In_Comm_Tung++;
+          }else if(data[i].Metal == "Gold"){
+            In_Comm_gold++;
+          }else{}
+        }else if(data[i].RMI_Status == "Non Conformant"){
+          if(data[i].Metal == "Tantalum"){
+            Non_Cnfo_Tant++;
+          }else if(data[i].Metal == "Tin"){
+            Non_Cnfo_Tin++;
+          }else if(data[i].Metal == "Tungsten"){
+            Non_Cnfo_Tung++;
+          }else if(data[i].Metal == "Gold"){
+            Non_Cnfo_gold++;
+          }else{}
+        }else if(data[i].RMI_Status == "Not Sure"){
+          if(data[i].Metal == "Tantalum"){
+            Not_Sure_Tant++;
+          }else if(data[i].Metal == "Tin"){
+            Not_Sure_Tin++;
+          }else if(data[i].Metal == "Tungsten"){
+            Not_Sure_Tung++;
+          }else if(data[i].Metal == "Gold"){
+            Not_Sure_gold++;
+          }else{}
+        }else if(data[i].RMI_Status == "Outreach Required"){
+          if(data[i].Metal == "Tantalum"){
+            Outreach_Req_Tant++;
+          }else if(data[i].Metal == "Tin"){
+            Outreach_Req_Tin++;
+          }else if(data[i].Metal == "Tungsten"){
+            Outreach_Req_Tung++;
+          }else if(data[i].Metal == "Gold"){
+            Outreach_Req_gold++;
+          }else{}
+        }else if(data[i].RMI_Status == "Smelter Not Listed In RMI file"){
+          // Smel_Not_Listed++;
+          if(data[i].Metal == "Tantalum"){
+            Smel_Not_Listed_Tant++;
+          }else if(data[i].Metal == "Tin"){
+            Smel_Not_Listed_Tin++;
+          }else if(data[i].Metal == "Tungsten"){
+            Smel_Not_Listed_Tung++;
+          }else if(data[i].Metal == "Gold"){
+            Smel_Not_Listed_gold++;
+          }else{}
+        }else if(data[i].RMI_Status == "RMI Due Diligence Review - Unable to Proceed"){
+          if(data[i].Metal == "Tantalum"){
+            Due_Dili_Req_unab_pro_Tant++;
+          }else if(data[i].Metal == "Tin"){
+            Due_Dili_Req_unab_pro_Tant++;
+          }else if(data[i].Metal == "Tungsten"){
+            Due_Dili_Req_unab_pro_Tant++;
+          }else if(data[i].Metal == "Gold"){
+            Due_Dili_Req_unab_pro_Tant++;
+          }else{}
+        }else{}
+      }
+      ActiveObj = {"Tantalum":Active_Count_Tant, "Tin":Active_Count_Tin,"Tungsten":Active_Count_Tung,"Gold":Active_Count_gold }
+      ConformantObj = {"Tantalum":Conformant_Count_Tant, "Tin":Conformant_Count_Tin,"Tungsten":Conformant_Count_Tung, "Gold":Conformant_Count_gold }
+      Comm_Sus_Obj = {"Tantalum":Comm_Sus_Not_Intr_Tant, "Tin":Comm_Sus_Not_Intr_Tin,"Tungsten":Comm_Sus_Not_Intr_Tung, "Gold":Comm_Sus_Not_Intr_gold }
+      In_Comm_Obj = {"Tantalum":In_Comm_Tant, "Tin":In_Comm_Tin,"Tungsten":In_Comm_Tung, "Gold":In_Comm_gold }
+      Non_Cnfo_Obj = {"Tantalum":Non_Cnfo_Tant, "Tin":Non_Cnfo_Tin,"Tungsten":Non_Cnfo_Tung, "Gold":Non_Cnfo_gold }
+      Not_Sure_Obj = {"Tantalum":Not_Sure_Tant, "Tin":Not_Sure_Tin,"Tungsten":Not_Sure_Tung, "Gold":Not_Sure_gold }
+      Outreach_Req_Obj = {"Tantalum":Outreach_Req_Tant, "Tin":Outreach_Req_Tin,"Tungsten":Outreach_Req_Tung, "Gold":Outreach_Req_gold }
+      Smel_Not_Listed_Obj = {"Tantalum":Smel_Not_Listed_Tant, "Tin":Smel_Not_Listed_Tin,"Tungsten":Smel_Not_Listed_Tung, "Gold":Smel_Not_Listed_gold }
+      Due_Dili_Req_unab_pro_Obj = {"Tantalum":Due_Dili_Req_unab_pro_Tant, "Tin":Due_Dili_Req_unab_pro_Tin,"Tungsten":Due_Dili_Req_unab_pro_Tung, "Gold":Due_Dili_Req_unab_pro_gold }
+      metalcountdata["ActiveObj"] = ActiveObj;
+      metalcountdata["ConformantObj"] = ConformantObj;
+      metalcountdata["Comm_Sus_Obj"] = Comm_Sus_Obj;
+      metalcountdata["In_Comm_Obj"] = In_Comm_Obj;
+      metalcountdata["Non_Cnfo_Obj"] = Non_Cnfo_Obj;
+      metalcountdata["Not_Sure_Obj"] = Not_Sure_Obj;
+      metalcountdata["Outreach_Req_Obj"] = Outreach_Req_Obj;
+    metalcountdata["Smel_Not_Listed_Obj"] = Smel_Not_Listed_Obj;
+     metalcountdata["Due_Dili_Req_unab_pro_Obj"] = Due_Dili_Req_unab_pro_Obj;
+     
+     console.log(metalcountdata);
+     res.json(metalcountdata);
+    }
+)
+
+
+app.get('/getconsolidatedfiledataforcolumnchart',(req,res)=>{
+  const data = excelfileReader.filteredSmelterIdList;
+  // console.log(data)
+  ObjTypeStatus = {}
+  count_HiRisk = 0;
+  count_LowRisk = 0;
+  count_MediumRisk = 0;
+  count_NotListed = 0;
+  count_Conformant = 0;
+  for(let i=0; i<data.length; i++){
+       if(data[i].Type == "High Risk"){
+           count_HiRisk++;
+       }else if(data[i].Type == "Low Risk"){
+           count_LowRisk++;
+       }else if(data[i].Type == "Medium Risk"){
+           count_MediumRisk++;
+       }else if(data[i].Type == "Smelter Not Listed In RMI file"){
+           count_NotListed++;
+       }else if(data[i].Type == "Not Found in RMI active /Conformant"){
+           count_Conformant++;
+       }else{
+
+       }
+  }
+  ObjTypeStatus["High Risk"] = count_HiRisk;
+  ObjTypeStatus["Low Risk"] = count_LowRisk;
+  ObjTypeStatus["Medium Risk"] = count_MediumRisk;
+  ObjTypeStatus["Smelter Not Listed In RMI file"] = count_NotListed;
+  ObjTypeStatus["Not Found in RMI active /Conformant"] = count_Conformant;
+
+  // console.log(ObjTypeStatus);
+  res.json(ObjTypeStatus);
+})
+
 app.put('/deleteGeneratefileanditsDetails',(req,res)=>{
    const ConsolidatedFileNum = req.body.consolidUniqNum;
    const resultFileNum = req.body.resultUniqueNum;
@@ -219,6 +470,11 @@ app.put('/deleteGeneratefileanditsDetails',(req,res)=>{
    let response = excelfileReader.deletefileAnditsdetail(ConsolidatedFileNum,resultFileNum,uniqfileNum);
    res.json(response);
         
+})
+
+app.post('/postuserDetail',(req,res)=>{
+   const element = req.body;
+   console.log(element);
 })
 
 app.post('/statusAndConsolidatedfileNumber',(req, res)=>{
